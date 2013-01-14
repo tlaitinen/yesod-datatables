@@ -43,5 +43,16 @@ library
                  , data-default
 
 
-    
+Test-suite tests
+    Type:       exitcode-stdio-1.0
+    Hs-source-dirs:  tests
+    Main-is:    main.hs
+    ghc-options:       -Wall
+    Build-depends: base >= 4 && < 5,
+                 yesod-datatables >= 0.1
+                 , test-framework >= 0.3.3
+                 , test-framework-quickcheck2 > 0.2.9
+                 , QuickCheck >= 2.4.0
+
+
 

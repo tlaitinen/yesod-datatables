@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Yesod.DataTables.Request (Req(..), parse) where
+module Yesod.DataTables.Request (Req(..), parseRequest) where
 import Prelude
 import Data.Aeson as J
 import Data.Attoparsec (parse, maybeResult)

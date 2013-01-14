@@ -1,8 +1,6 @@
 import Yesod.DataTables.Request as R
 import Test.Framework (Test, defaultMain, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import Data.Aeson as J
-import Data.Text
 main :: IO ()
 main = defaultMain tests
 
@@ -20,8 +18,8 @@ requestProperty = R.parseRequest [("iDisplayStart", "0"),
                                ("bRegex_1", "0"),
                                ("bSortable_0", "0"),
                                ("bSortable_1", "1"),
-                               ("mDataProp_0", "{\"a\" : \"b\"}"),
-                               ("mDataProp_1", "{ \"c\" : [1,2,3] }"),
+                               ("mDataProp_0", "id"),
+                               ("mDataProp_1", "name"),
                                ("iSortingCols", "2"),
                                ("iSortCol_0", "0"),
                                ("sSortDir_0", "asc"),
@@ -39,18 +37,14 @@ requestProperty = R.parseRequest [("iDisplayStart", "0"),
                                         R.colSearch = "bar.*baz",
                                         R.colSearchRegex = True,
                                         R.colSortable = False,
-                                        R.colDataProp = J.object [
-                                              "a" .= ("b" :: Text)
-                                            ]
+                                        R.colDataProp = "id"
                                     },
                                     R.Column {
                                         R.colSearchable = False,
                                         R.colSearch = "quux",
                                         R.colSearchRegex = False,
                                         R.colSortable = True,
-                                        R.colDataProp = J.object [
-                                             "c" .= toJSON ([1,2,3] :: [Int])
-                                            ]
+                                        R.colDataProp = "name"
                                     }        
                                  ],
                                  R.reqSort = [(0,R.SortAsc), (1, R.SortDesc)],

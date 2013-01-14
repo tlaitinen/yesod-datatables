@@ -2,7 +2,6 @@
 module Yesod.DataTables.Request (Req(..), Column(..), SortDir(..),
                                  parseRequest) where
 import Prelude
-import Data.Aeson as J
 import Data.Attoparsec (parse, maybeResult)
 import Data.List as L
 import Data.Maybe
@@ -22,7 +21,7 @@ data Column = Column {
     colSearch      :: Text,
     colSearchRegex :: Bool,
     colSortable    :: Bool,
-    colDataProp    :: J.Value
+    colDataProp    :: Text
 } deriving (Show, Eq)
 
 data Req = Req {
@@ -51,13 +50,12 @@ parseColumn searchable'
             search
             regex'
             sortable'
-            dataPropS = do
+            dataProp = do
 
             searchable <- readMaybe $ Just searchable'
             regex      <- readMaybe $ Just regex'
             sortable   <- readMaybe $ Just sortable'
             
-            dataProp <- maybeResult (parse json (BS8.pack (T.unpack dataPropS)))
             return $ Column {
                 colSearchable  = searchable > 0,
                 colSearch      = search,

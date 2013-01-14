@@ -1,0 +1,47 @@
+name:       yesod-datatables
+version:    0.1
+license:    BSD3
+license-file: LICENSE
+author:     Tero Laitinen
+maintainer: Tero Laitinen
+synopsis:   Yesod plugin for DataTables (jQuery grid plugin)
+description: DataTables (http://datatables.net) is a capable jQuery plugin. This package contains routines for implementing server-side processing (e.g. request parsing and response formatting) for DataTables with Yesod platform. 
+category: Web
+stability: Experimental
+cabal-version: >= 1.8
+build-type:     Simple
+homepage:  http://github.com/tlaitinen/yesod-datatables
+
+library
+    exposed-modules: Yesod.DataTables.Request
+
+    extensions: TemplateHaskell
+                QuasiQuotes
+                OverloadedStrings
+                NoImplicitPrelude
+                CPP
+                MultiParamTypeClasses
+                TypeFamilies
+                GADTs
+                GeneralizedNewtypeDeriving
+                FlexibleContexts
+                EmptyDataDecls
+                NoMonomorphismRestriction
+
+    build-depends: base                          >= 4          && < 5
+                 , yesod                         >= 1.1.5      && < 1.2
+                 , yesod-core                    >= 1.1.7      && < 1.2
+                 , yesod-auth                    >= 1.1        && < 1.2
+                 , yesod-static                  >= 1.1        && < 1.2
+                 , yesod-default                 >= 1.1        && < 1.2
+                 , yesod-form                    >= 1.1        && < 1.3
+                 , bytestring                    >= 0.9        && < 0.11
+                 , text                          >= 0.11       && < 0.12
+                 , persistent                    >= 1.1        && < 1.2
+                 , attoparsec                    >= 0.10     
+                 , aeson                         >= 0.6
+                 , data-default
+
+
+    
+

@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Yesod.DataTables.Request (Req(..), parseRequest) where
+module Yesod.DataTables.Request (Req(..), Column(..), SortDir(..),
+                                 parseRequest) where
 import Prelude
 import Data.Aeson as J
 import Data.Attoparsec (parse, maybeResult)
@@ -12,7 +13,7 @@ import Data.Text.Encoding as E
 type ParamName  = Text
 type ParamValue = Text
 
-data SortInfo = SortNone | SortAsc | SortDesc deriving (Eq, Show)
+data SortDir= SortAsc | SortDesc deriving (Eq, Show)
 
 type ColumnId = Int
 
@@ -22,17 +23,17 @@ data Column = Column {
     colSearchRegex :: Bool,
     colSortable    :: Bool,
     colDataProp    :: J.Value
-} deriving (Show)
+} deriving (Show, Eq)
 
 data Req = Req {
     reqDisplayStart  :: Int,
     reqDisplayLength :: Int,
     reqSearch        :: Text,
+    reqSearchRegex   :: Bool,
     reqColumns       :: [Column],
-    reqRegex         :: Bool,
-    reqSort          :: [(ColumnId,SortInfo)],
+    reqSort          :: [(ColumnId,SortDir)],
     reqEcho          :: Int 
-} deriving (Show)
+} deriving (Show, Eq)
 
 readMaybe :: (Read a) => Maybe Text -> Maybe a
 readMaybe (Just s) = case reads (unpack s) of
@@ -73,13 +74,13 @@ checkColumns mcolumns nColumns= let
             then Just columns
             else Nothing
 
-readSortDir :: Text -> Maybe SortInfo
+readSortDir :: Text -> Maybe SortDir
 readSortDir "asc" = Just SortAsc
 readSortDir "desc" = Just SortDesc
 readSortDir _ = Nothing
 
-parseSortInfo :: Text -> Text -> Maybe (ColumnId, SortInfo)
-parseSortInfo idStr sortDir = do
+parseSortDir :: Text -> Text -> Maybe (ColumnId, SortDir)
+parseSortDir idStr sortDir = do
     idNum <- readMaybe (Just idStr)
     dir <- readSortDir sortDir
     return (idNum, dir)
@@ -129,14 +130,14 @@ parseRequest params = do
     sortingColsDir <- manyParams "sSortDir_" nSortingCols
     echo           <- readMaybe $ param "sEcho"
 
-    let sortInfo   = catMaybes $ L.zipWith parseSortInfo 
+    let sortInfo   = catMaybes $ L.zipWith parseSortDir 
                                            sortingCols sortingColsDir
 
     return $ Req {
         reqDisplayStart  = displayStart,
         reqDisplayLength = displayLength,
         reqSearch        = search,
-        reqRegex         = regex > 0,
+        reqSearchRegex   = regex > 0,
         reqColumns       = columns,
         reqSort          = sortInfo,
         reqEcho          = echo

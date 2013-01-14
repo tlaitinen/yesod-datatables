@@ -86,23 +86,6 @@ parseSortDir idStr sortDir = do
     return (idNum, dir)
 
 
-tester :: [(ParamName, ParamValue)] -> Maybe Text
-tester params = do
-    param "sSearch"
-    where
-        param :: ParamName -> Maybe ParamValue
-        param key = lookup key params
-        manyParams :: ParamName -> Int -> Maybe [ParamValue]
-        manyParams key num = let
-            values = catMaybes $ L.map param
-                                 [ T.concat [key, pack $ show n] 
-                                   | n <- [0..num-1] ]
-            numValues = L.length values
-            in
-                if numValues == num 
-                    then Just values
-                    else Nothing  
-
 parseRequest :: [(ParamName, ParamValue)] -> Maybe Req
 parseRequest params = do
     displayStart   <- readMaybe $ param "iDisplayStart" 

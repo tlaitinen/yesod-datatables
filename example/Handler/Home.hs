@@ -10,6 +10,15 @@ import Import
 -- The majority of the code you will write in Yesod lives in these handler
 -- functions. You can spread them across multiple files if you are so
 -- inclined, or create a single monolithic file.
+
+dataTablesWidget :: Widget
+dataTablesWidget = do
+    
+    addStylesheet $ StaticR css_jquery_dataTables_css
+    addScript $ StaticR js_jquery_1_9_0_min_js        
+    addScript $ StaticR js_datatables_js
+
+
 getHomeR :: Handler RepHtml
 getHomeR = do
     (formWidget, formEnctype) <- generateFormPost sampleForm

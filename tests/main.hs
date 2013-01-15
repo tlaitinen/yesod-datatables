@@ -1,11 +1,45 @@
-import Yesod.DataTables.Request as R
+import Prelude 
+import Yesod.DataTables.Request
+import Yesod.DataTables.Reply 
 import Test.Framework (Test, defaultMain, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import Data.Aeson as J
+import Data.Attoparsec as P
+import Data.ByteString as B
+import Data.ByteString.Lazy as BL
+import Data.Text (Text)
 main :: IO ()
 main = defaultMain tests
 
+testRequest :: Req
+testRequest = Req {
+        reqDisplayStart = 0,
+        reqDisplayLength = 10,
+        reqSearch = "foo",
+        reqSearchRegex = False,
+        reqColumns = [ 
+            Column {
+                colSearchable = True,
+                colSearch = "bar.*baz",
+                colSearchRegex = True,
+                colSortable = False,
+                colDataProp = "id"
+            },
+            Column {
+                colSearchable = False,
+                colSearch = "quux",
+                colSearchRegex = False,
+                colSortable = True,
+                colDataProp = "name"
+            }        
+        ],
+        reqSort = [(0,SortAsc), (1, SortDesc)],
+        reqEcho = 1
+    }
+
+
 requestProperty :: Bool
-requestProperty = R.parseRequest [("iDisplayStart", "0"),
+requestProperty = parseRequest [("iDisplayStart", "0"),
                               ("iDisplayLength", "10"),
                                ("iColumns", "2"),
                                ("sSearch", "foo"),
@@ -26,36 +60,42 @@ requestProperty = R.parseRequest [("iDisplayStart", "0"),
                                ("iSortCol_1", "1"),
                                ("sSortDir_1", "desc"),
                                ("sEcho", "1")
-                             ] == Just R.Req {
-                                 R.reqDisplayStart = 0,
-                                 R.reqDisplayLength = 10,
-                                 R.reqSearch = "foo",
-                                 R.reqSearchRegex = False,
-                                 R.reqColumns = [ 
-                                    R.Column {
-                                        R.colSearchable = True,
-                                        R.colSearch = "bar.*baz",
-                                        R.colSearchRegex = True,
-                                        R.colSortable = False,
-                                        R.colDataProp = "id"
-                                    },
-                                    R.Column {
-                                        R.colSearchable = False,
-                                        R.colSearch = "quux",
-                                        R.colSearchRegex = False,
-                                        R.colSortable = True,
-                                        R.colDataProp = "name"
-                                    }        
-                                 ],
-                                 R.reqSort = [(0,R.SortAsc), (1, R.SortDesc)],
-                                 R.reqEcho = 1
-                             }
-                                              
+                             ] == Just testRequest
+                                                                          
 
+replyProperty :: Bool
+replyProperty = (Just expectedReply) == (P.maybeResult parsedReply)
+    where
+        records = J.toJSON [
+                    J.object [
+                        "id" .= (4321 :: Int),
+                        "name" .= ("row 1"::Text)
+                    ],
+                    J.object [
+                        "id" .= (2468 :: Int),
+                        "name" .= ("row 2"::Text)
+                    ]
+                ]
 
+        formattedReply = formatReply testRequest (Reply {
+                replyNumRecords = 123,
+                replyNumDisplayRecords = 64,
+                replyRecords = records
+            }) 
+        parsedReply = P.parse J.json ((B.concat . BL.toChunks) formattedReply)
+        expectedReply = J.object [
+                "iTotalRecords" .= (123 :: Int),
+                "iTotalDisplayRecords" .= (64 :: Int),
+                "sEcho" .= (1 :: Int),
+                "aaData" .= records
+            ]
+        
 tests :: [Test]
 tests = [
         testGroup "request" $ [
             testProperty "request-property" requestProperty
+        ],
+        testGroup "reply" $ [
+            testProperty "reply-property" replyProperty
         ]
     ]

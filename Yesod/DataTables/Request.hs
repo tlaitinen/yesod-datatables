@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Yesod.DataTables.Request (Req(..), Column(..), SortDir(..),
+module Yesod.DataTables.Request (Req(..), Column(..), ColumnName, SortDir(..),
                                  parseRequest) where
 import Prelude
 import Data.Attoparsec (parse, maybeResult)
@@ -14,14 +14,14 @@ type ParamValue = Text
 
 data SortDir= SortAsc | SortDesc deriving (Eq, Show)
 
-type ColumnId = Int
+type ColumnName = Text
 
 data Column = Column {
     colSearchable  :: Bool,
     colSearch      :: Text,
     colSearchRegex :: Bool,
     colSortable    :: Bool,
-    colDataProp    :: Text
+    colName        :: Text
 } deriving (Show, Eq)
 
 data Req = Req {
@@ -30,7 +30,7 @@ data Req = Req {
     reqSearch        :: Text,
     reqSearchRegex   :: Bool,
     reqColumns       :: [Column],
-    reqSort          :: [(ColumnId,SortDir)],
+    reqSort          :: [(ColumnName,SortDir)],
     reqEcho          :: Int 
 } deriving (Show, Eq)
 
@@ -61,7 +61,7 @@ parseColumn searchable'
                 colSearch      = search,
                 colSearchRegex = regex > 0,
                 colSortable    = sortable > 0,
-                colDataProp    = dataProp
+                colName        = dataProp
             }
     
 checkColumns :: [Maybe Column] -> Int -> Maybe [Column]
@@ -77,12 +77,17 @@ readSortDir "asc" = Just SortAsc
 readSortDir "desc" = Just SortDesc
 readSortDir _ = Nothing
 
-parseSortDir :: Text -> Text -> Maybe (ColumnId, SortDir)
-parseSortDir idStr sortDir = do
+parseSortDir :: [Column] -> Text -> Text -> Maybe (ColumnName, SortDir)
+parseSortDir columns idStr sortDir = do
     idNum <- readMaybe (Just idStr)
+    name <- maybeColumnName idNum
     dir <- readSortDir sortDir
-    return (idNum, dir)
-
+    return (name, dir)
+    where
+        maybeColumnName colId 
+            | colId < 0 = Nothing
+            | colId >= L.length columns = Nothing
+            | otherwise = Just $ colName (columns !! colId)
 
 parseRequest :: [(ParamName, ParamValue)] -> Maybe Req
 parseRequest params = do
@@ -95,23 +100,24 @@ parseRequest params = do
     cSearch        <- manyParams "bSearch_" nColumns
     cRegex         <- manyParams "bRegex_" nColumns
     cSortable      <- manyParams "bSortable_" nColumns
-    cDataProp      <- manyParams "mDataProp_" nColumns
+    cName          <- manyParams "mDataProp_" nColumns
 
     let columnData = L.zipWith5 parseColumn 
                                cSearchable
                                cSearch
                                cRegex
                                cSortable
-                               cDataProp
+                               cName
     columns        <- checkColumns columnData nColumns
 
     nSortingCols   <- readMaybe $ param "iSortingCols"
 
     sortingCols    <- manyParams "iSortCol_" nSortingCols
     sortingColsDir <- manyParams "sSortDir_" nSortingCols
+
     echo           <- readMaybe $ param "sEcho"
 
-    let sortInfo   = catMaybes $ L.zipWith parseSortDir 
+    let sortInfo   = catMaybes $ L.zipWith (parseSortDir columns)
                                            sortingCols sortingColsDir
 
     return $ Req {

@@ -2,7 +2,6 @@ module Yesod.DataTables.Reply (Reply(..), formatReply) where
 import Prelude
 import qualified Data.ByteString.Lazy as L
 import Data.Int
-import qualified Yesod.DataTables.Request as R
 import Data.Aeson as J
 
 data Reply = Reply {
@@ -16,13 +15,16 @@ data Reply = Reply {
     replyNumDisplayRecords   :: Int64,
 
     -- |An array of JSON objects, one for each record.
-    replyRecords    :: J.Value
+    replyRecords             :: J.Value,
+
+    -- |An unaltered copy of 'sEcho' sent from the client side. 
+    replyEcho                :: Int64
 } deriving (Eq)
 
-formatReply :: R.Req -> Reply -> L.ByteString
-formatReply request reply = encode $ J.object [
+formatReply :: Reply -> L.ByteString
+formatReply reply = encode $ J.object [
         "iTotalRecords" .= replyNumRecords reply,
         "iTotalDisplayRecords" .= replyNumDisplayRecords reply,
-        "sEcho" .= R.reqEcho request,
+        "sEcho" .= replyEcho reply,
         "aaData" .= replyRecords reply
     ]

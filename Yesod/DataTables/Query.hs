@@ -15,10 +15,19 @@ import Data.Aeson as J
 type RegexFlag = Bool
 
 data DataTable val = DataTable {
+        -- | mapping global search field to filters
         dtGlobalSearch :: Text -> RegexFlag -> [Filter val],
+
+        -- | mapping sorting instructions to select options
         dtSort         :: [(ColumnName,SortDir)] -> [SelectOpt val],
+
+        -- | mapping a column search to filters
         dtColumnSearch :: ColumnName -> Text -> RegexFlag -> [Filter val],
+
+        -- | filters that are always applied
         dtFilters      :: [Filter val],
+
+        -- | mapping column name and entity to a textual value
         dtValue        :: ColumnName -> Entity val -> Text
     }
     

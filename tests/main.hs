@@ -31,8 +31,8 @@ Person
 main :: IO ()
 main = defaultMain tests
 
-testRequest :: Req
-testRequest = Req {
+testRequest :: Request
+testRequest = Request {
         reqDisplayStart = 0,
         reqDisplayLength = 10,
         reqSearch = "foo",
@@ -54,7 +54,8 @@ testRequest = Req {
             }        
         ],
         reqSort = [("name",SortAsc), ("id", SortDesc)],
-        reqEcho = 1
+        reqEcho = 1,
+        reqParams = J.object []
     }
 
 
@@ -79,7 +80,8 @@ requestProperty = parseRequest [("iDisplayStart", "0"),
                                ("sSortDir_0", "asc"),
                                ("iSortCol_1", "0"),
                                ("sSortDir_1", "desc"),
-                               ("sEcho", "1")
+                               ("sEcho", "1"),
+                               ("fnServerParams", "{}")
                              ] == Just testRequest
                                                                           
 
@@ -111,8 +113,8 @@ replyProperty = (Just expectedReply) == (P.maybeResult parsedReply)
                 "aaData" .= records
             ]
 
-queryTestRequest1 :: Req
-queryTestRequest1 = Req {
+queryTestRequest1 :: Request
+queryTestRequest1 = Request {
         reqDisplayStart = 1,
         reqDisplayLength = 2,
         reqSearch = "",
@@ -168,7 +170,7 @@ queryTestDataTable = DT.DataTable {
         DT.dtGlobalSearch = \text regexFlag -> [],
         DT.dtSort = \sorts -> [],
         DT.dtColumnSearch = \cname search regex -> [],
-        DT.dtFilters = [ PersonName <-. [ "John Doe", 
+        DT.dtFilters = \_ -> [ PersonName <-. [ "John Doe", 
                                           "Jane Doe", 
                                           "Jeff Black" ] ],
         DT.dtValue = myDtValue 
@@ -182,6 +184,29 @@ queryTestDataTable = DT.DataTable {
         myDtValue _ _ = ""
 queryTest :: IO ()
 queryTest = do
+    Prelude.putStrLn $ show $ parseRequest [("iDisplayStart", "0"),
+                              ("iDisplayLength", "10"),
+                               ("iColumns", "2"),
+                               ("sSearch", "foo"),
+                               ("bRegex", "0"),
+                               ("bSearchable_0", "1"),
+                               ("bSearchable_1", "0"),
+                               ("bSearch_0", "bar.*baz"),
+                               ("bSearch_1", "quux"),
+                               ("bRegex_0", "1"),
+                               ("bRegex_1", "0"),
+                               ("bSortable_0", "0"),
+                               ("bSortable_1", "1"),
+                               ("mDataProp_0", "id"),
+                               ("mDataProp_1", "name"),
+                               ("iSortingCols", "2"),
+                               ("iSortCol_0", "1"),
+                               ("sSortDir_0", "asc"),
+                               ("iSortCol_1", "0"),
+                               ("sSortDir_1", "desc"),
+                               ("sEcho", "1"),
+                               ("fnServerParams", "")]
+                   
     (reply, johnId, janeId, jackId, jillId) <- runResourceT 
             $ withSqliteConn ":memory:" $ runSqlConn $ do
         runMigration migrateAll

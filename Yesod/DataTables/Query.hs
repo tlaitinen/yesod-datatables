@@ -24,8 +24,8 @@ data DataTable val = DataTable {
         -- | mapping a column search to filters
         dtColumnSearch :: ColumnName -> Text -> RegexFlag -> [Filter val],
 
-        -- | filters that are always applied
-        dtFilters      :: [Filter val],
+        -- | filters depending on call-site params
+        dtFilters      :: J.Value -> [Filter val],
 
         -- | mapping column name and entity to a textual value
         dtValue        :: ColumnName -> Entity val -> Text
@@ -36,9 +36,9 @@ data DataTable val = DataTable {
 select :: (PersistEntity val, 
                PersistQuery m, 
                PersistEntityBackend val ~ PersistMonadBackend m) 
-           => DataTable val -> Req -> m Reply
+           => DataTable val -> Request -> m Reply
 select dt req = do
-    totalCount   <- D.count (dtFilters dt)
+    totalCount   <- D.count $ (dtFilters dt) (reqParams req)
     displayCount <- D.count (filters dt)
     entities     <- D.selectList (filters dt) (selectOpts dt)
     return $ Reply {
@@ -49,7 +49,7 @@ select dt req = do
     }
     where
         filters :: DataTable val -> [Filter val]
-        filters dt = dtFilters dt ++ colSearchFilters dt ++ globalSearchFilters dt
+        filters dt = ((dtFilters dt) (reqParams req)) ++ colSearchFilters dt ++ globalSearchFilters dt
         colSearchFilters :: DataTable val -> [Filter val]
         colSearchFilters dt = Prelude.concatMap (\(c,s,r) -> (dtColumnSearch dt) c s r) 
                                        [ (colName c, 

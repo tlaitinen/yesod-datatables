@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Yesod.DataTables.Request (Req(..), Column(..), ColumnName, SortDir(..),
+module Yesod.DataTables.Request (Request(..), Column(..), ColumnName, SortDir(..),
                                  parseRequest) where
 import Prelude
+import Data.Aeson as J
 import Data.Attoparsec (parse, maybeResult)
 import Data.List as L
 import Data.Maybe
@@ -24,14 +25,15 @@ data Column = Column {
     colName        :: Text
 } deriving (Show, Eq)
 
-data Req = Req {
+data Request = Request {
     reqDisplayStart  :: Int,
     reqDisplayLength :: Int,
     reqSearch        :: Text,
     reqSearchRegex   :: Bool,
     reqColumns       :: [Column],
     reqSort          :: [(ColumnName,SortDir)],
-    reqEcho          :: Int 
+    reqEcho          :: Int,
+    reqParams        :: J.Value
 } deriving (Show, Eq)
 
 readMaybe :: (Read a) => Maybe Text -> Maybe a
@@ -89,7 +91,7 @@ parseSortDir columns idStr sortDir = do
             | colId >= L.length columns = Nothing
             | otherwise = Just $ colName (columns !! colId)
 
-parseRequest :: [(ParamName, ParamValue)] -> Maybe Req
+parseRequest :: [(ParamName, ParamValue)] -> Maybe Request
 parseRequest params = do
     displayStart   <- readMaybe $ param "iDisplayStart" 
     displayLength  <- readMaybe $ param "iDisplayLength"
@@ -101,7 +103,6 @@ parseRequest params = do
     cRegex         <- manyParams "bRegex_" nColumns
     cSortable      <- manyParams "bSortable_" nColumns
     cName          <- manyParams "mDataProp_" nColumns
-
     let columnData = L.zipWith5 parseColumn 
                                cSearchable
                                cSearch
@@ -117,17 +118,22 @@ parseRequest params = do
 
     echo           <- readMaybe $ param "sEcho"
 
+    params'        <- param "fnServerParams"
+    params         <- maybeResult $ parse J.json (E.encodeUtf8 params')
+
+
     let sortInfo   = catMaybes $ L.zipWith (parseSortDir columns)
                                            sortingCols sortingColsDir
 
-    return $ Req {
+    return $ Request {
         reqDisplayStart  = displayStart,
         reqDisplayLength = displayLength,
         reqSearch        = search,
         reqSearchRegex   = regex > 0,
         reqColumns       = columns,
         reqSort          = sortInfo,
-        reqEcho          = echo
+        reqEcho          = echo,
+        reqParams        = params
     }
     where
         param :: ParamName -> Maybe ParamValue

@@ -16,6 +16,7 @@ library
     exposed-modules: Yesod.DataTables.Request
                    , Yesod.DataTables.Reply
                    , Yesod.DataTables.Query
+                   , Yesod.DataTables
 
     extensions: TemplateHaskell
                 QuasiQuotes

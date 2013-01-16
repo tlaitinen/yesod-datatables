@@ -1,0 +1,10 @@
+$(#{rawJS widgetId}).dataTable({
+    "bServerSide": true, 
+    "sAjaxSource" : "@{DataTableR}",
+    "aoColumns": [
+      { "mData": "ident" },
+      { "mData": "name" },
+      { "mData": "age" },
+    ]
+    });
+    

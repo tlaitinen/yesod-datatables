@@ -1,2 +1,10 @@
-<div id="#{widgetId}">
-
+<table id="#{widgetId}">
+  <thead>
+    <tr>
+      <th>
+        Identifier
+      <th>
+        Name
+      <th>
+        Age
+  <tbody>

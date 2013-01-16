@@ -1,5 +1,8 @@
 User
     ident Text
+    firstName Text
+    lastName Text
+    age Int
     password Text Maybe
     UniqueUser ident
 Email

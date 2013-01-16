@@ -32,8 +32,7 @@ data Request = Request {
     reqSearchRegex   :: Bool,
     reqColumns       :: [Column],
     reqSort          :: [(ColumnName,SortDir)],
-    reqEcho          :: Int,
-    reqParams        :: J.Value
+    reqEcho          :: Int
 } deriving (Show, Eq)
 
 readMaybe :: (Read a) => Maybe Text -> Maybe a
@@ -118,10 +117,6 @@ parseRequest params = do
 
     echo           <- readMaybe $ param "sEcho"
 
-    params'        <- param "fnServerParams"
-    params         <- maybeResult $ parse J.json (E.encodeUtf8 params')
-
-
     let sortInfo   = catMaybes $ L.zipWith (parseSortDir columns)
                                            sortingCols sortingColsDir
 
@@ -132,8 +127,7 @@ parseRequest params = do
         reqSearchRegex   = regex > 0,
         reqColumns       = columns,
         reqSort          = sortInfo,
-        reqEcho          = echo,
-        reqParams        = params
+        reqEcho          = echo
     }
     where
         param :: ParamName -> Maybe ParamValue

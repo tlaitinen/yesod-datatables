@@ -1,8 +1,8 @@
-exec: ../dist/build/example/example
+exec: ../dist/build/yesod-datatables-example/yesod-datatables-example
 args:
     - production
-host: <<HOST-NOT-SET>>
+host: core.feriko.fi
 
 # Use the following to automatically copy your bundle upon creation via `yesod
 # keter`. Uses `scp` internally, so you can set it to a remote destination
-# copy-to: user@host:/opt/keter/incoming
+copy-to: tero@core.feriko.fi:/opt/keter/incoming

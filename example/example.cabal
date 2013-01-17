@@ -70,7 +70,7 @@ library
                  , data-default
                  , aeson
 
-executable         example
+executable         yesod-datatables-example
     if flag(library-only)
         Buildable: False
 

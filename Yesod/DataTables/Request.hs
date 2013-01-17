@@ -41,6 +41,11 @@ readMaybe (Just s) = case reads (unpack s) of
               _ -> Nothing
 readMaybe _ = Nothing
 
+readBool :: Maybe Text -> Maybe Bool
+readBool (Just "true") = Just True
+readBool (Just "false") = Just False
+readBool _ = Nothing
+
 parseColumn ::  Text
             ->  Text
             ->  Text
@@ -53,15 +58,15 @@ parseColumn searchable'
             sortable'
             dataProp = do
 
-            searchable <- readMaybe $ Just searchable'
-            regex      <- readMaybe $ Just regex'
-            sortable   <- readMaybe $ Just sortable'
+            searchable <- readBool $ Just searchable'
+            regex      <- readBool $ Just regex'
+            sortable   <- readBool $ Just sortable'
             
             return $ Column {
-                colSearchable  = searchable > 0,
+                colSearchable  = searchable,
                 colSearch      = search,
-                colSearchRegex = regex > 0,
-                colSortable    = sortable > 0,
+                colSearchRegex = regex,
+                colSortable    = sortable,
                 colName        = dataProp
             }
     
@@ -96,9 +101,9 @@ parseRequest params = do
     displayLength  <- readMaybe $ param "iDisplayLength"
     nColumns       <- readMaybe $ param "iColumns"
     search         <- param "sSearch"
-    regex          <- readMaybe $ param "bRegex"
+    regex          <- readBool $ param "bRegex"
     cSearchable    <- manyParams "bSearchable_" nColumns 
-    cSearch        <- manyParams "bSearch_" nColumns
+    cSearch        <- manyParams "sSearch_" nColumns
     cRegex         <- manyParams "bRegex_" nColumns
     cSortable      <- manyParams "bSortable_" nColumns
     cName          <- manyParams "mDataProp_" nColumns
@@ -124,7 +129,7 @@ parseRequest params = do
         reqDisplayStart  = displayStart,
         reqDisplayLength = displayLength,
         reqSearch        = search,
-        reqSearchRegex   = regex > 0,
+        reqSearchRegex   = regex,
         reqColumns       = columns,
         reqSort          = sortInfo,
         reqEcho          = echo

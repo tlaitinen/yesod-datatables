@@ -3,7 +3,7 @@
 module Yesod.DataTables.Query (DataTable(..), 
                                RegexFlag,
                                ColumnName,
-                               select) where
+                               dataTableSelect) where
 
 import Prelude
 import Yesod.DataTables.Request
@@ -28,16 +28,19 @@ data DataTable val = DataTable {
         dtFilters      :: [Filter val],
 
         -- | mapping column name and entity to a textual value
-        dtValue        :: ColumnName -> Entity val -> Text
+        dtValue        :: ColumnName -> Entity val -> Text,
+
+        -- | mapping entity to a row identifier
+        dtRowId        :: Entity val -> Text
     }
     
 
 
-select :: (PersistEntity val, 
+dataTableSelect :: (PersistEntity val, 
                PersistQuery m, 
                PersistEntityBackend val ~ PersistMonadBackend m) 
            => DataTable val -> Request -> m Reply
-select dt req = do
+dataTableSelect dt req = do
     totalCount   <- D.count $ (dtFilters dt) 
     displayCount <- D.count (filters dt)
     entities     <- D.selectList (filters dt) (selectOpts dt)
@@ -59,7 +62,7 @@ select dt req = do
         globalSearchFilters :: DataTable val -> [Filter val]                                       
         globalSearchFilters dt = (dtGlobalSearch dt) (reqSearch req) 
                                                   (reqSearchRegex req)
-        formatEntity entity = J.object $ Prelude.map (formatColumn entity) 
+        formatEntity entity = J.object $ [ "DT_RowId" .= (dtRowId dt entity) ] ++ Prelude.map (formatColumn entity) 
                                           [ colName c | c <- reqColumns req]
         formatColumn entity cn = cn .= (dtValue dt cn entity)
         selectOpts dt = [OffsetBy (reqDisplayStart req),

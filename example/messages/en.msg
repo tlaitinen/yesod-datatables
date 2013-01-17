@@ -1,1 +1,1 @@
-Hello: Hello
+Hello: Yesod.DataTables example

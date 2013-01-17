@@ -20,8 +20,8 @@ data Reply = Reply {
     replyEcho                :: Int
 } deriving (Eq, Show)
 
-formatReply :: Reply -> L.ByteString
-formatReply reply = encode $ J.object [
+formatReply :: Reply -> J.Value
+formatReply reply = J.object [
         "iTotalRecords" .= replyNumRecords reply,
         "iTotalDisplayRecords" .= replyNumDisplayRecords reply,
         "sEcho" .= replyEcho reply,

@@ -28,8 +28,11 @@ Person
 |]
 
 
+
+
 main :: IO ()
-main = defaultMain tests
+main = do
+    defaultMain tests
 
 testRequest :: Request
 testRequest = Request {
@@ -54,7 +57,7 @@ testRequest = Request {
             }        
         ],
         reqSort = [("name",SortAsc), ("id", SortDesc)],
-        reqEcho = 1,
+        reqEcho = 1
     }
 
 
@@ -63,15 +66,15 @@ requestProperty = parseRequest [("iDisplayStart", "0"),
                               ("iDisplayLength", "10"),
                                ("iColumns", "2"),
                                ("sSearch", "foo"),
-                               ("bRegex", "0"),
-                               ("bSearchable_0", "1"),
-                               ("bSearchable_1", "0"),
-                               ("bSearch_0", "bar.*baz"),
-                               ("bSearch_1", "quux"),
-                               ("bRegex_0", "1"),
-                               ("bRegex_1", "0"),
-                               ("bSortable_0", "0"),
-                               ("bSortable_1", "1"),
+                               ("bRegex", "false"),
+                               ("bSearchable_0", "true"),
+                               ("bSearchable_1", "false"),
+                               ("sSearch_0", "bar.*baz"),
+                               ("sSearch_1", "quux"),
+                               ("bRegex_0", "true"),
+                               ("bRegex_1", "false"),
+                               ("bSortable_0", "false"),
+                               ("bSortable_1", "true"),
                                ("mDataProp_0", "id"),
                                ("mDataProp_1", "name"),
                                ("iSortingCols", "2"),
@@ -79,12 +82,12 @@ requestProperty = parseRequest [("iDisplayStart", "0"),
                                ("sSortDir_0", "asc"),
                                ("iSortCol_1", "0"),
                                ("sSortDir_1", "desc"),
-                               ("sEcho", "1"),
+                               ("sEcho", "1")
                              ] == Just testRequest
                                                                           
 
 replyProperty :: Bool
-replyProperty = (Just expectedReply) == (P.maybeResult parsedReply)
+replyProperty = expectedReply == formattedReply
     where
         records = J.toJSON [
                     J.object [
@@ -103,7 +106,6 @@ replyProperty = (Just expectedReply) == (P.maybeResult parsedReply)
                 replyRecords = records,
                 replyEcho = 1
             }) 
-        parsedReply = P.parse J.json ((B.concat . BL.toChunks) formattedReply)
         expectedReply = J.object [
                 "iTotalRecords" .= (123 :: Int),
                 "iTotalDisplayRecords" .= (64 :: Int),
@@ -149,11 +151,13 @@ queryTestReply1 johnId janeId jackId jillId = Reply {
         replyNumDisplayRecords = 3,
         replyRecords = J.toJSON [
                 J.object [
+                    "DT_RowId" .= ("2" :: Text),
                     "id" .= ("2" :: Text),
                     "name" .= ("Jane Doe" :: Text),
                     "age" .= ("" :: Text)
                 ],
                 J.object [
+                    "DT_RowId" .= ("3" :: Text),
                     "id" .= ("3" :: Text),
                     "name" .= ("Jeff Black" :: Text),
                     "age" .= ("24" :: Text)
@@ -171,7 +175,8 @@ queryTestDataTable = DT.DataTable {
         DT.dtFilters =  [ PersonName <-. [ "John Doe", 
                                          "Jane Doe", 
                                           "Jeff Black" ] ],
-        DT.dtValue = myDtValue 
+        DT.dtValue = myDtValue,
+        DT.dtRowId = myRowId 
     }
     where 
         myDtValue cname (Entity (Key (PersistInt64 key)) value)
@@ -180,6 +185,9 @@ queryTestDataTable = DT.DataTable {
             | cname == "age"  = T.pack $ maybe "" show $ personAge value
             | otherwise = ""
         myDtValue _ _ = ""
+        myRowId (Entity (Key (PersistInt64 key)) _) = T.pack $ show key
+        myRowId _ = ""
+
 queryTest :: IO ()
 queryTest = do
     (reply, johnId, janeId, jackId, jillId) <- runResourceT 
@@ -189,7 +197,7 @@ queryTest = do
         janeId <- insert $ Person "Jane Doe" Nothing
         jackId <- insert $ Person "Jeff Black" $ Just 24
         jillId <- insert $ Person "Jill Black" Nothing
-        reply <- DT.select queryTestDataTable queryTestRequest1
+        reply <- DT.dataTableSelect queryTestDataTable queryTestRequest1
         return (reply, johnId, janeId, jackId, jillId)
     reply @=? (queryTestReply1 johnId janeId jackId jillId)
     Prelude.putStrLn (show reply)

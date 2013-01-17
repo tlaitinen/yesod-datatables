@@ -38,6 +38,9 @@ makeApplication conf = do
     logWare   = if development then logStdoutDev
                                else logStdout
 
+
+
+
 makeFoundation :: AppConfig DefaultEnv Extra -> IO App
 makeFoundation conf = do
     manager <- newManager def

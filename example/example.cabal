@@ -67,6 +67,7 @@ library
                  , directory                     >= 1.1        && < 1.3
                  , warp                          >= 1.3        && < 1.4
                  , yesod-datatables
+                 , resourcet
                  , data-default
                  , aeson
 

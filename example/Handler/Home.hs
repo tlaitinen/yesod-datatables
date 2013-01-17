@@ -93,9 +93,73 @@ getDataTableR = do
 
 getHomeR :: Handler RepHtml
 getHomeR = do
+    
+
+    maybeUser <- runDB $ (selectFirst [] [Asc UserFirstName] ) 
+    runDB $ if isNothing maybeUser 
+        then do
+            mapM_ (\user -> insert user) exampleUsers
+            return ()
+        else return ()
+
     let submission = Nothing :: Maybe (FileInfo, Text)
         handlerName = "getHomeR" :: Text
     defaultLayout $ do
         aDomId <- lift newIdent
         setTitle "Welcome To Yesod.DataTables example!"
         $(widgetFile "homepage")
+
+
+exampleUsers :: [User] 
+exampleUsers = [
+        User "lupita51" "Lupita" "Alday" 51 Nothing,
+        User "elizbeth23" "Elizbeth" "Bosco" 23 Nothing,
+        User "leilani28" "Leilani" "Cooper" 28 Nothing,
+        User "ward14" "Ward" "Galland" 14 Nothing,
+        User "berna90" "Berna" "Foston" 90 Nothing,
+        User "bruna59" "Bruna" "Axford" 59 Nothing,
+        User "roxana85" "Roxana" "Booth" 85 Nothing,
+        User "heather17" "Heather" "Bolivar" 17 Nothing,
+        User "scarlett78" "Scarlett" "Morrisey" 78 Nothing,
+        User "ryann19" "Ryann" "Chenoweth" 19 Nothing,
+        User "tami58" "Tami" "Bautch" 58 Nothing,
+        User "lashawna5" "Lashawna" "Berrier" 5 Nothing,
+        User "abbie13" "Abbie" "Quail" 13 Nothing,
+        User "edna53" "Edna" "Waynick" 53 Nothing,
+        User "gertie44" "Gertie" "Forbus" 44 Nothing,
+        User "lemuel56" "Lemuel" "Everette" 56 Nothing,
+        User "claris50" "Claris" "Lentz" 50 Nothing,
+        User "carie44" "Carie" "Squire" 44 Nothing,
+        User "kimbery31" "Kimbery" "Clewis" 31 Nothing,
+        User "deloras59" "Deloras" "Profitt" 59 Nothing,
+        User "carolee62" "Carolee" "Woodford" 62 Nothing,
+        User "mickey82" "Mickey" "Aguayo" 82 Nothing,
+        User "alissa32" "Alissa" "Hausman" 32 Nothing,
+        User "alanna71" "Alanna" "Detrick" 71 Nothing,
+        User "lasonya64" "Lasonya" "Hammers" 64 Nothing,
+        User "isaac48" "Isaac" "Heineman" 48 Nothing,
+        User "mariana85" "Mariana" "Stansell" 85 Nothing,
+        User "emmett59" "Emmett" "Newcomer" 59 Nothing,
+        User "grant22" "Grant" "Lacey" 22 Nothing,
+        User "joanie4" "Joanie" "Roberge" 4 Nothing,
+        User "odell63" "Odell" "Shunk" 63 Nothing,
+        User "yasuko44" "Yasuko" "Kerbs" 44 Nothing,
+        User "mozella55" "Mozella" "Stalker" 55 Nothing,
+        User "tommy58" "Tommy" "Peaden" 58 Nothing,
+        User "rigoberto60" "Rigoberto" "Asaro" 60 Nothing,
+        User "ciara63" "Ciara" "Ducan" 63 Nothing,
+        User "adrian74" "Adrian" "Greeson" 74 Nothing,
+        User "sheri78" "Sheri" "Sickels" 78 Nothing,
+        User "sharita14" "Sharita" "Custard" 14 Nothing,
+        User "margurite75" "Margurite" "Mok" 75 Nothing,
+        User "deann69" "Deann" "Sacks" 69 Nothing,
+        User "farrah46" "Farrah" "Diggs" 46 Nothing,
+        User "ashlee84" "Ashlee" "Downer" 84 Nothing,
+        User "tuyet86" "Tuyet" "Wagaman" 86 Nothing,
+        User "leonor7" "Leonor" "Asuncion" 7 Nothing,
+        User "herbert77" "Herbert" "Hennis" 77 Nothing,
+        User "joleen69" "Joleen" "Starkey" 69 Nothing,
+        User "hyman73" "Hyman" "Swanigan" 73 Nothing,
+        User "denese45" "Denese" "Cleveland" 45 Nothing,
+        User "devona10" "Devona" "Espinosa" 10 Nothing
+    ]

@@ -9,8 +9,8 @@ Yesod platform.
 See the example at http://yesod-datatables-example.herokuapp.com .
 
 The relevant bits are in:
- * [Handler](blob/master/example/Handler/Home.hs)
- * [hamlet-template](blob/master/example/templates/dataTableWidget.hamlet)
- * [julius-template](blob/master/example/templates/dataTableWidget.julius)
+ * [Handler](yesod-datatables/blob/master/example/Handler/Home.hs)
+ * [hamlet-template](yesod-datatables/blob/master/example/templates/dataTableWidget.hamlet)
+ * [julius-template](yesod-datatables/blob/master/example/templates/dataTableWidget.julius)
 
 The reference documentation is at TODO.

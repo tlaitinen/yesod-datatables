@@ -20,6 +20,8 @@ data Reply = Reply {
     replyEcho                :: Int
 } deriving (Eq, Show)
 
+-- |Translates the reply object to a JSON value that DataTables javascript
+-- plugin expects.
 formatReply :: Reply -> J.Value
 formatReply reply = J.object [
         "iTotalRecords" .= replyNumRecords reply,

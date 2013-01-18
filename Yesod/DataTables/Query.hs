@@ -39,7 +39,8 @@ data DataTable val = DataTable {
                        => Entity val -> m Text
     }
 
-
+-- | selects records from database and populates the grid columns using 
+-- callback functions (which can issue follow-up queries)
 dataTableSelect :: (PersistEntity val, 
                PersistQuery m, 
                PersistEntityBackend val ~ PersistMonadBackend m) 

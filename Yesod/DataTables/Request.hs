@@ -10,28 +10,57 @@ import Data.Text as T
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import Data.Text.Encoding as E
+
 type ParamName  = Text
 type ParamValue = Text
 
-data SortDir= SortAsc | SortDesc deriving (Eq, Show)
+-- | enum for sSortDir_(int) 
+data SortDir = SortAsc | SortDesc deriving (Eq, Show)
 
 type ColumnName = Text
 
+-- | information about grid column 
 data Column = Column {
+    -- | whether searching is enabled at client-side
     colSearchable  :: Bool,
+
+    -- | column-specific search query  
     colSearch      :: Text,
+
+    -- | whether search query should be interpreted as a regular expression
     colSearchRegex :: Bool,
+
+    -- | whether sorting is enabled at client-side
     colSortable    :: Bool,
+
+    -- | column name (client-side also expects the data in a field with the
+    -- same name 
     colName        :: Text
 } deriving (Show, Eq)
 
+
+-- | DataTables grid server-side request
+-- (see http://datatables.net/usage/server-side)
 data Request = Request {
+    -- | Display start point in the current data set.
     reqDisplayStart  :: Int,
+
+    -- | Number of records that the table can display in the current draw. It is expected that the number of records returned will be equal to this number, unless the server has fewer records to return.
     reqDisplayLength :: Int,
+
+    -- | Global search field
     reqSearch        :: Text,
+
+    -- | True if the global filter should be treated as a regular expression for advanced filtering, false if not.
     reqSearchRegex   :: Bool,
+
+    -- | columns that the client-side knows about
     reqColumns       :: [Column],
+
+    -- | result set sorting instructions 
     reqSort          :: [(ColumnName,SortDir)],
+
+    -- | Information for DataTables to use for rendering (do not alter).
     reqEcho          :: Int
 } deriving (Show, Eq)
 
@@ -95,6 +124,8 @@ parseSortDir columns idStr sortDir = do
             | colId >= L.length columns = Nothing
             | otherwise = Just $ colName (columns !! colId)
 
+
+-- | Tries to parse DataTables request
 parseRequest :: [(ParamName, ParamValue)] -> Maybe Request
 parseRequest params = do
     displayStart   <- readMaybe $ param "iDisplayStart" 

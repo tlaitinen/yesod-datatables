@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
 module Yesod.DataTables.Query (DataTable(..), 
                                RegexFlag,
                                ColumnName,
@@ -14,7 +15,7 @@ import Database.Persist as D
 import Data.Aeson as J
 type RegexFlag = Bool
 
-data DataTable val = DataTable {
+data DataTable val = forall m. DataTable {
         -- | mapping global search field to filters
         dtGlobalSearch :: Text -> RegexFlag -> [Filter val],
 
@@ -28,44 +29,52 @@ data DataTable val = DataTable {
         dtFilters      :: [Filter val],
 
         -- | mapping column name and entity to a textual value
-        dtValue        :: ColumnName -> Entity val -> Text,
+        dtValue        :: (PersistEntity val, 
+                           PersistQuery m, 
+                           PersistEntityBackend val ~ PersistMonadBackend m)
+                       => ColumnName -> Entity val -> Text,
 
         -- | mapping entity to a row identifier
-        dtRowId        :: Entity val -> Text
+        dtRowId        :: (PersistEntity val, 
+                           PersistQuery m, 
+                           PersistEntityBackend val ~ PersistMonadBackend m)
+                       => Entity val -> Text
     }
-    
 
 
 dataTableSelect :: (PersistEntity val, 
                PersistQuery m, 
                PersistEntityBackend val ~ PersistMonadBackend m) 
            => DataTable val -> Request -> m Reply
-dataTableSelect dt req = do
-    totalCount   <- D.count $ (dtFilters dt) 
-    displayCount <- D.count (filters dt)
-    entities     <- D.selectList (filters dt) (selectOpts dt)
+dataTableSelect (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dtValue' dtRowId') req = do
+    totalCount   <- D.count $ dtFilters'
+    let filters = dtFilters' ++ colSearchFilters ++ globalSearchFilters
+    displayCount <- D.count filters
+    entities     <- D.selectList filters selectOpts
+    records      <- mapM formatEntity entities
     return $ Reply {
         replyNumRecords = fromIntegral totalCount,
         replyNumDisplayRecords = displayCount,
-        replyRecords = J.toJSON $ Prelude.map formatEntity entities,
+        replyRecords = J.toJSON $ records,
         replyEcho = reqEcho req
     }
     where
-        filters :: DataTable val -> [Filter val]
-        filters dt = ((dtFilters dt) ) ++ colSearchFilters dt ++ globalSearchFilters dt
-        colSearchFilters :: DataTable val -> [Filter val]
-        colSearchFilters dt = Prelude.concatMap (\(c,s,r) -> (dtColumnSearch dt) c s r) 
+        colSearchFilters = Prelude.concatMap (\(c,s,r) -> dtColumnSearch'  c s r) 
                                        [ (colName c, 
                                           colSearch c, 
                                           colSearchRegex c)
                                        | c <- reqColumns req, colSortable c ]
-        globalSearchFilters :: DataTable val -> [Filter val]                                       
-        globalSearchFilters dt = (dtGlobalSearch dt) (reqSearch req) 
-                                                  (reqSearchRegex req)
-        formatEntity entity = J.object $ [ "DT_RowId" .= (dtRowId dt entity) ] ++ Prelude.map (formatColumn entity) 
-                                          [ colName c | c <- reqColumns req]
-        formatColumn entity cn = cn .= (dtValue dt cn entity)
-        selectOpts dt = [OffsetBy (reqDisplayStart req),
+        globalSearchFilters = dtGlobalSearch' (reqSearch req) 
+                                              (reqSearchRegex req)
+        
+        formatEntity entity = do
+            rowId   <- dtRowId' entity
+            columns <- mapM (formatColumn entity) [colName c | c <- reqColumns req]
+            return $ J.object $ [ "DT_RowId" .= rowId ] ++ columns
+        formatColumn entity cn = do
+            value <- dtValue' cn entity
+            return $ cn .= value
+        selectOpts  = [OffsetBy (reqDisplayStart req),
                       LimitTo (reqDisplayLength req)] 
-                     ++ (dtSort dt) (reqSort req)
+                     ++ dtSort' (reqSort req)
 

@@ -10,12 +10,12 @@ import Prelude
 import Yesod.DataTables.Request
 import Yesod.DataTables.Reply
 import Data.Text
-
+import Control.Monad (liftM)
 import Database.Persist as D
 import Data.Aeson as J
 type RegexFlag = Bool
 
-data DataTable val = forall m. DataTable {
+data DataTable val = DataTable {
         -- | mapping global search field to filters
         dtGlobalSearch :: Text -> RegexFlag -> [Filter val],
 
@@ -29,16 +29,14 @@ data DataTable val = forall m. DataTable {
         dtFilters      :: [Filter val],
 
         -- | mapping column name and entity to a textual value
-        dtValue        :: (PersistEntity val, 
-                           PersistQuery m, 
+        dtValue        :: forall m. (PersistQuery m,
                            PersistEntityBackend val ~ PersistMonadBackend m)
-                       => ColumnName -> Entity val -> Text,
+                       => ColumnName -> Entity val -> m Text,
 
         -- | mapping entity to a row identifier
-        dtRowId        :: (PersistEntity val, 
-                           PersistQuery m, 
+        dtRowId        :: forall m. (PersistQuery m,
                            PersistEntityBackend val ~ PersistMonadBackend m)
-                       => Entity val -> Text
+                       => Entity val -> m Text
     }
 
 
@@ -51,6 +49,7 @@ dataTableSelect (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dt
     let filters = dtFilters' ++ colSearchFilters ++ globalSearchFilters
     displayCount <- D.count filters
     entities     <- D.selectList filters selectOpts
+    rowId <- dtRowId' (Prelude.head entities)
     records      <- mapM formatEntity entities
     return $ Reply {
         replyNumRecords = fromIntegral totalCount,

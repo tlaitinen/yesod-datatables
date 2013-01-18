@@ -180,13 +180,13 @@ queryTestDataTable = DT.DataTable {
     }
     where 
         myDtValue cname (Entity (Key (PersistInt64 key)) value)
-            | cname == "id"   = T.pack $ show key
-            | cname == "name" = personName value
-            | cname == "age"  = T.pack $ maybe "" show $ personAge value
-            | otherwise = ""
-        myDtValue _ _ = ""
-        myRowId (Entity (Key (PersistInt64 key)) _) = T.pack $ show key
-        myRowId _ = ""
+            | cname == "id"   = return $ T.pack $ show key
+            | cname == "name" = return $ personName value
+            | cname == "age"  = return $ T.pack $ maybe "" show $ personAge value
+            | otherwise = return $ ""
+        myDtValue _ _ = return $ ""
+        myRowId (Entity (Key (PersistInt64 key)) _) = return $ T.pack $ show key
+        myRowId _ = return $ ""
 
 queryTest :: IO ()
 queryTest = do

@@ -1,8 +1,10 @@
+-- | DataTables reply formatting.
 module Yesod.DataTables.Reply (Reply(..), formatReply) where
 import Prelude
 import qualified Data.ByteString.Lazy as L
 import Data.Aeson as J
 
+-- | Container for holding the reply to DataTables jQuery plugin.
 data Reply = Reply {
     -- |Total records, before filtering 
     -- (i.e. the total number of records in the database).

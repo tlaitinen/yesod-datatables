@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- | DataTables request parsing.
 module Yesod.DataTables.Request (Request(..), Column(..), ColumnName, SortDir(..),
                                  parseRequest) where
 import Prelude
@@ -11,12 +12,16 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import Data.Text.Encoding as E
 
+-- | HTTP request (GET/POST) parameter name
 type ParamName  = Text
+
+-- | HTTP request (GET/POS) parameter value
 type ParamValue = Text
 
 -- | enum for sSortDir_(int) 
 data SortDir = SortAsc | SortDesc deriving (Eq, Show)
 
+-- | Name of DataTables grid column 
 type ColumnName = Text
 
 -- | information about grid column 

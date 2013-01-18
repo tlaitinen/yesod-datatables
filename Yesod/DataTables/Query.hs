@@ -1,6 +1,8 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
+-- | This module is used to make database queries based on the
+-- DataTables request. 
 module Yesod.DataTables.Query (DataTable(..), 
                                RegexFlag,
                                ColumnName,
@@ -13,8 +15,12 @@ import Data.Text
 import Control.Monad (liftM)
 import Database.Persist as D
 import Data.Aeson as J
+-- | Type synonym for indicating whether a search string is a regular
+-- expression.
 type RegexFlag = Bool
 
+-- | The functions in a DataTable define how search strings, column sorting,
+-- filtering and value fetching is implemented.
 data DataTable val = DataTable {
         -- | mapping global search field to filters
         dtGlobalSearch :: Text -> RegexFlag -> [Filter val],

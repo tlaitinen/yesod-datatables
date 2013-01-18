@@ -1,5 +1,5 @@
 name:       yesod-datatables
-version:    0.1
+version:    0.1.1
 license:    BSD3
 license-file: LICENSE
 author:     Tero Laitinen
@@ -17,7 +17,6 @@ library
                    , Yesod.DataTables.Reply
                    , Yesod.DataTables.Query
                    , Yesod.DataTables
-
     extensions: TemplateHaskell
                 QuasiQuotes
                 OverloadedStrings

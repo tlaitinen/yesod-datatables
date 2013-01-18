@@ -12,10 +12,10 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BS8
 import Data.Text.Encoding as E
 
--- | HTTP request (GET/POST) parameter name
+-- | HTTP request (GET or POST) parameter name
 type ParamName  = Text
 
--- | HTTP request (GET/POS) parameter value
+-- | HTTP request (GET or POST) parameter value
 type ParamValue = Text
 
 -- | enum for sSortDir_(int) 
@@ -45,7 +45,7 @@ data Column = Column {
 
 
 -- | DataTables grid server-side request
--- (see http://datatables.net/usage/server-side)
+-- (see <http://datatables.net/usage/server-side>)
 data Request = Request {
     -- | Display start point in the current data set.
     reqDisplayStart  :: Int,

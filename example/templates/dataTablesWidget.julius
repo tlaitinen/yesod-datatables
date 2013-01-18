@@ -5,6 +5,7 @@ $(#{rawJS widgetId}).dataTable({
       { "mData": "ident" },
       { "mData": "name" },
       { "mData": "age" },
+      { "mData": "email", "bSortable" : false }
     ]
     });
     

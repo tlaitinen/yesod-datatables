@@ -1,5 +1,5 @@
 Default: &defaults
-  database: ":memory:"
+  database: example.sqlite3
   poolsize: 10
 
 Development:

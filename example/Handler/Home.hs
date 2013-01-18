@@ -97,12 +97,6 @@ getDataTableR = do
             jsonToRepJson $ formatReply reply
         else
             jsonToRepJson $ J.object [ "error" .= ("could not parse request" :: Text)]
-makeUserEmail user userKey = Email 
-                          (T.concat [ userIdent user, "@", 
-                                        T.toLower $ userLastName user,
-                                        ".com" ])
-                            (Just userKey)  Nothing
-
 getHomeR :: Handler RepHtml
 getHomeR = do
     
@@ -111,7 +105,15 @@ getHomeR = do
     runDB $ if isNothing maybeUser 
         then mapM_ (\user -> do
                         userKey <- insert user
-                        insert $ makeUserEmail user userKey)
+                        _ <- insert $ Email (T.concat [ 
+                                        T.toLower $ userFirstName user, "@", 
+                                        T.toLower $ userLastName user,
+                                        ".com" ])
+                            (Just userKey)  Nothing
+                        insert $ Email (T.concat [ "info@", 
+                                        T.toLower $ userLastName user,
+                                        ".com" ])
+                            (Just userKey)  Nothing)
                    exampleUsers
         else return ()
 

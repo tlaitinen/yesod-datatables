@@ -13,4 +13,4 @@ The relevant bits are in:
  * [hamlet-template](yesod-datatables/blob/master/example/templates/dataTableWidget.hamlet)
  * [julius-template](yesod-datatables/blob/master/example/templates/dataTableWidget.julius)
 
-The reference documentation is at TODO.
+The reference documentation is available in [Hackage](http://hackage.haskell.org/package/yesod-datatables)

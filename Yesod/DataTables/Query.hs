@@ -56,7 +56,6 @@ dataTableSelect (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dt
     let filters = dtFilters' ++ colSearchFilters ++ globalSearchFilters
     displayCount <- D.count filters
     entities     <- D.selectList filters selectOpts
-    rowId <- dtRowId' (Prelude.head entities)
     records      <- mapM formatEntity entities
     return $ Reply {
         replyNumRecords = fromIntegral totalCount,

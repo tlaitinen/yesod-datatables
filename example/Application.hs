@@ -11,10 +11,12 @@ import Yesod.Auth
 import Yesod.Default.Config
 import Yesod.Default.Main
 import Yesod.Default.Handlers
+import Yesod.Static (staticDevel)
 import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
-import qualified Database.Persist.Store
-import Database.Persist.GenericSql (runMigration)
-import Network.HTTP.Conduit (newManager, def)
+import qualified Database.Persist
+import Database.Persist.Sql (runMigration)
+import Network.HTTP.Conduit (newManager)
+import Network.HTTP.Client (defaultManagerSettings)
 
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
@@ -43,13 +45,13 @@ makeApplication conf = do
 
 makeFoundation :: AppConfig DefaultEnv Extra -> IO App
 makeFoundation conf = do
-    manager <- newManager def
-    s <- staticSite
+    manager <- newManager  defaultManagerSettings
+    s <- staticDevel (Settings.staticDir)
     dbconf <- withYamlEnvironment "config/sqlite.yml" (appEnv conf)
-              Database.Persist.Store.loadConfig >>=
-              Database.Persist.Store.applyEnv
-    p <- Database.Persist.Store.createPoolConfig (dbconf :: Settings.PersistConfig)
-    Database.Persist.Store.runPool dbconf (runMigration migrateAll) p
+              Database.Persist.loadConfig >>=
+              Database.Persist.applyEnv
+    p <- Database.Persist.createPoolConfig (dbconf :: Settings.PersistConfig)
+    Database.Persist.runPool dbconf (runMigration migrateAll) p
     return $ App conf s p manager dbconf
 
 -- for yesod devel
@@ -57,6 +59,6 @@ getApplicationDev :: IO (Int, Application)
 getApplicationDev =
     defaultDevelApp loader makeApplication
   where
-    loader = loadConfig (configSettings Development)
+    loader = Yesod.Default.Config.loadConfig (configSettings Development)
         { csParseExtra = parseExtra
         }

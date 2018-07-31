@@ -8,12 +8,13 @@ import Import
 import Yesod.DataTables
 import Data.Aeson as J
 import Text.Julius
-import Database.Persist.Store
 import qualified Data.Text as T
 import Data.Maybe
 import qualified Data.ByteString.Char8 as B
 import qualified Data.ByteString.Lazy as BL
 import Data.String.Utils as SU
+
+
 -- This is a handler function for the GET request method on the HomeR
 -- resource pattern. All of your resource patterns are defined in
 -- config/routes
@@ -50,18 +51,15 @@ readMaybe s = case reads (T.unpack s) of
 maybeUserAgeSearch :: Text -> [Filter User] -> [Filter User]
 maybeUserAgeSearch search filters = maybe filters (\a -> filters ||. [UserAge ==. a]) (readMaybe search)
 
-userValueByCol :: forall m. (PersistQuery m, 
-                   PersistEntityBackend User ~ PersistMonadBackend m) 
-               => ColumnName -> Entity User -> m Text
-userValueByCol "id" (Entity (Key (PersistInt64 val)) _) = return $ T.pack $ show val
-userValueByCol "ident" (Entity _ u) = return $ userIdent u
-userValueByCol "name" (Entity _ u) = return $ T.concat [userFirstName u, " ", userLastName u]
-userValueByCol "age" (Entity _ u) = return $ T.pack $ show $ userAge u
-userValueByCol "email" (Entity key _) = do
-    emails <- selectList [ EmailUser ==. (Just key) ] [ Asc EmailEmail ]
-    return $ T.pack $ SU.join ", " [ T.unpack $ emailEmail e 
-                                       | (Entity _ e) <- emails ]
-userValueByCol _ _ = return $ ""
+userValueByCol :: ColumnName -> Entity User -> Text
+userValueByCol "id" (Entity key _)  = T.pack $ show key
+userValueByCol "ident" (Entity _ u) =  userIdent u
+userValueByCol "name" (Entity _ u) = T.concat [userFirstName u, " ", userLastName u]
+userValueByCol "age" (Entity _ u) = T.pack $ show $ userAge u
+userValueByCol "email" (Entity _ _) = ""
+
+
+userValueByCol _ _ =  ""
 
 userDataTable :: DataTable User
 userDataTable = DataTable {
@@ -78,15 +76,15 @@ userDataTable = DataTable {
 
 }
 
-dataTablesWidget :: DataTable val -> Widget
-dataTablesWidget dt = do
-    widgetId <- lift newIdent    
+
+dataTablesWidget _ = do
+    widgetId <- newIdent    
     addStylesheet $ StaticR css_jquery_dataTables_css
     addScript $ StaticR js_jquery_1_9_0_min_js        
     addScript $ StaticR js_datatables_js
     $(widgetFile "dataTablesWidget")
 
-getDataTableR :: Handler RepJson
+getDataTableR :: Handler Value
 getDataTableR = do
     httpReq <- getRequest
     let request = parseRequest (reqGetParams httpReq)
@@ -94,10 +92,10 @@ getDataTableR = do
         then do
             reply <- runDB $ dataTableSelect userDataTable (fromJust request)
             liftIO $ putStrLn $ B.unpack $ B.concat $ BL.toChunks $ J.encode $ formatReply reply
-            jsonToRepJson $ formatReply reply
+            returnJson $ formatReply reply
         else
-            jsonToRepJson $ J.object [ "error" .= ("could not parse request" :: Text)]
-getHomeR :: Handler RepHtml
+            returnJson $ J.object [ "error" .= ("could not parse request" :: Text)]
+getHomeR :: Handler Html
 getHomeR = do
     
 
@@ -116,13 +114,11 @@ getHomeR = do
                             (Just userKey)  Nothing)
                    exampleUsers
         else return ()
-
-    let submission = Nothing :: Maybe (FileInfo, Text)
-        handlerName = "getHomeR" :: Text
+    aDomId <- newIdent
     defaultLayout $ do
-        aDomId <- lift newIdent
         setTitle "Welcome To Yesod.DataTables example!"
         $(widgetFile "homepage")
+
     
 
 

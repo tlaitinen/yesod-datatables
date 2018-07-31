@@ -11,7 +11,7 @@ import           Data.Text            as Import (Text)
 
 import           Foundation           as Import
 import           Model                as Import
-import           Settings             as Import
+import           Settings             as Import hiding (PersistConfig)  
 import           Settings.Development as Import
 import           Settings.StaticFiles as Import
 

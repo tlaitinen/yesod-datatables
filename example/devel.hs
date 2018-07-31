@@ -1,7 +1,8 @@
 {-# LANGUAGE PackageImports #-}
 import "example" Application (getApplicationDev)
 import Network.Wai.Handler.Warp
-    (runSettings, defaultSettings, settingsPort)
+    (runSettings, defaultSettings)
+import Network.Wai.Handler.Warp.Internal (settingsPort)    
 import Control.Concurrent (forkIO)
 import System.Directory (doesFileExist, removeFile)
 import System.Exit (exitSuccess)

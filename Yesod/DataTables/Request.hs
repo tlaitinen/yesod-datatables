@@ -3,14 +3,9 @@
 module Yesod.DataTables.Request (Request(..), Column(..), ColumnName, SortDir(..),
                                  parseRequest) where
 import Prelude
-import Data.Aeson as J
-import Data.Attoparsec (parse, maybeResult)
 import Data.List as L
 import Data.Maybe
 import Data.Text as T
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Char8 as BS8
-import Data.Text.Encoding as E
 
 -- | HTTP request (GET or POST) parameter name
 type ParamName  = Text

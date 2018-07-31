@@ -35,14 +35,15 @@ library
                  , yesod-core                    >= 1.1.7      
                  , yesod-auth                    >= 1.1        
                  , yesod-static                  >= 1.1        
-                 , yesod-default                 >= 1.1        
                  , yesod-form                    >= 1.1        
                  , bytestring                    >= 0.9        
                  , text                          >= 0.11       
                  , persistent                    >= 1.1        
                  , attoparsec                    >= 0.10     
-                 , aeson                         >= 0.6
+                 , aeson                         >= 0.6                 
                  , data-default
+                 , mtl
+                 , shakespeare
 
 
 Test-suite tests
@@ -58,7 +59,7 @@ Test-suite tests
                  , QuickCheck >= 2.4.0
                  , aeson >= 0.6
                  , attoparsec                    >= 0.10     
-                 , text         >= 0.11       && < 0.12
+                 , text         >= 0.11       
                  , bytestring                    >= 0.9       
                  , persistent                    >= 1.1       
                  , HUnit >= 1.2.5

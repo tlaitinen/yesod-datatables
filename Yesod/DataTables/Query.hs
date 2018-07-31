@@ -15,6 +15,9 @@ import Data.Text
 import Control.Monad (liftM)
 import Database.Persist as D
 import Data.Aeson as J
+import Control.Monad.IO.Class
+import Control.Monad.Reader
+
 -- | Type synonym for indicating whether a search string is a regular
 -- expression.
 type RegexFlag = Bool
@@ -35,35 +38,39 @@ data DataTable val = DataTable {
         dtFilters      :: [Filter val],
 
         -- | mapping column name and entity to a textual value
-        dtValue        :: forall m. (PersistQuery m,
-                           PersistEntityBackend val ~ PersistMonadBackend m)
-                       => ColumnName -> Entity val -> m Text,
+        dtValue        :: ColumnName -> Entity val ->  Text,
 
         -- | mapping entity to a row identifier
-        dtRowId        :: forall m. (PersistQuery m,
-                           PersistEntityBackend val ~ PersistMonadBackend m)
-                       => Entity val -> m Text
+        dtRowId        :: Entity val -> Text
     }
 
--- | selects records from database and populates the grid columns using 
--- callback functions (which can issue follow-up queries)
-dataTableSelect :: (PersistEntity val, 
-               PersistQuery m, 
-               PersistEntityBackend val ~ PersistMonadBackend m) 
-           => DataTable val -> Request -> m Reply
-dataTableSelect (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dtValue' dtRowId') req = do
+getJustEntity
+  :: (PersistEntityBackend record ~ BaseBackend backend
+     ,MonadIO m
+     ,PersistEntity record
+     ,PersistStoreRead backend)
+  => Key record -> ReaderT backend m (Entity record)
+getJustEntity key = do
+  record <- getJust key
+  return $
+    Entity
+    { entityKey = key
+    , entityVal = record
+    }
+
+
+
+dataTableSelectEntities :: (PersistEntityBackend record ~ BaseBackend backend
+     ,MonadIO m
+     ,PersistEntity record
+     ,PersistStoreRead backend, PersistQueryRead backend) => DataTable record -> Request ->  ReaderT backend m (Int, Int, [Entity record]) 
+dataTableSelectEntities (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dtValue' dtRowId') req = do
     totalCount   <- D.count $ dtFilters'
     let filters = dtFilters' ++ colSearchFilters ++ globalSearchFilters
     displayCount <- D.count filters
     entities     <- D.selectList filters selectOpts
-    records      <- mapM formatEntity entities
-    return $ Reply {
-        replyNumRecords = fromIntegral totalCount,
-        replyNumDisplayRecords = displayCount,
-        replyRecords = J.toJSON $ records,
-        replyEcho = reqEcho req
-    }
-    where
+    return (totalCount, displayCount, entities)
+  where
         colSearchFilters = Prelude.concatMap (\(c,s,r) -> dtColumnSearch'  c s r) 
                                        [ (colName c, 
                                           colSearch c, 
@@ -72,14 +79,32 @@ dataTableSelect (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dt
         globalSearchFilters = dtGlobalSearch' (reqSearch req) 
                                               (reqSearchRegex req)
         
-        formatEntity entity = do
-            rowId   <- dtRowId' entity
-            columns <- mapM (formatColumn entity) [colName c | c <- reqColumns req]
-            return $ J.object $ [ "DT_RowId" .= rowId ] ++ columns
-        formatColumn entity cn = do
-            value <- dtValue' cn entity
-            return $ cn .= value
         selectOpts  = [OffsetBy (reqDisplayStart req),
                       LimitTo (reqDisplayLength req)] 
                      ++ dtSort' (reqSort req)
+  
+
+-- | selects records from database and populates the grid columns using 
+-- callback functions (which can issue follow-up queries)
+dataTableSelect  :: (PersistEntityBackend record ~ BaseBackend backend
+     ,MonadIO m
+     ,PersistEntity record
+     ,PersistStoreRead backend, PersistQueryRead backend) => DataTable record -> Request ->  ReaderT backend m Reply
+
+dataTableSelect (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dtValue' dtRowId') req = do
+    (totalCount, displayCount,entities) <- dataTableSelectEntities (DataTable dtGlobalSearch' dtSort' dtColumnSearch' dtFilters' dtValue' dtRowId') req
+    let records     =  Prelude.map formatEntity entities
+    return $ Reply {
+        replyNumRecords = totalCount,
+        replyNumDisplayRecords = displayCount,
+        replyRecords = J.toJSON $ records,
+        replyEcho = reqEcho req
+    }
+    where
+      formatEntity entity = let rowId   =  dtRowId' entity in  let columns = Prelude.map (formatColumn entity) [colName c | c <- reqColumns req] in J.object $ [ "DT_RowId" .= rowId ] ++ columns
+      formatColumn entity cn = let value = dtValue' cn entity in  cn .= value
+
+
+        
+
 
